@@ -1,0 +1,67 @@
+
+##Este deploy lo que hace cuando se hace un push desde la rama main lo va a correr en UBUNTU (aws - ec2).
+##Hace el log en DOCKER y hace un push en DOCKER HUB (hay que configurar los secretos en github).
+##Ponemos el build con la tag en este caso v1 (importante ponerlo igual en el compose de DOCKER para que funcione).
+##Posteriormente lo despliega en la instancia de AWS (recordar lo de la IP, ya que no lo tenemos elástico).
+##Crea la carpeta "deploy" en la raíz del usuario Ubuntu en este caso
+##Para finalizar despliega con docker compose en la instancia.
+
+
+name: CI/CD Pipeline for Calculadora
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      #Construir la imagen de "mi_cine BBDD"    
+      - name: Build and push DB docker image
+        run: |
+          cd mysql
+          docker build -t ${{ secrets.DOCKER_USER }}/mi_cine:v1 .
+          docker push ${{ secrets.DOCKER_USER }}/mi_cine:v1
+
+      #Construir la imagen de la aplicación
+      - name: Buld and push aplication PHP
+        run: |
+          cd php
+          docker build -t ${{ secrets.DOCKER_USER }}/mi_app_cine:v1 .
+          docker push ${{ secrets.DOCKER_USER }}/mi_app_cine:v1
+
+      #Transferirr el archivo compose.yml al servidor remoto
+      - name: Transfe compose.yml al servidor remoto
+        uses: appleboy/scp-action@master
+        with:
+            host: ${{ secrets.REMOTE_HOST }}
+            username: ${{ secrets.REMOTE_USER }}
+            key: ${{ secrets.REMOTE_KEY }} ##Ponerlo igual en los secretos que lo tengo de otra forma!!
+            source: ./compose.yaml ##Poner el mismo nombre. en este caso lo tengo como "compose.yaml"
+            target: ~/deploy/
+
+      #Desplegar la aplicación en el servidor remoto usando docker-compose
+      - name: Deploy with Docker Compose ##Tener instalado antes el programa en la instancia
+        uses: appleboy/ssh-action@master
+        with:
+            host: ${{ secrets.REMOTE_HOST }}
+            username: ${{ secrets.REMOTE_USER }}
+            key: ${{ secrets.REMOTE_KEY }}
+            script: |
+              cd ~/deploy
+              sudo chmod 666 /var/run/docker.sock
+              docker compose down || true
+              docker compose pull
+              docker compose up -d      

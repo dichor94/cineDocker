@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Añadir y Eliminar</title>
+</head>
+<body>
+  <h1>Añadir película</h1>
+  
+  <form action="update.php" method="post">
+    Título película: <input type="text" name="nameMov" ><br><br>
+    Director: <input type="text" name="nameDir"><br><br>
+    Nota: <input type="text" name="noteMov"><br><br>
+    Año: <input type="text" name="yearMov"><br><br>
+    Presupuesto: <input type="text" name="presMov"><br><br>
+    Foto: <input type="text" name="photoMov"><br><br>
+    Link: <input type="text" name="linkMov"><br><br>
+
+    <input type="submit" value="Añadir">
+  </form>
+
+  <br><br><br>
+  
+  <h1>Eliminar película</h1>
+
+  <form action="delete.php" method="post">
+
+    ID: <input type="text" name="idMov"><input type="submit" value="Eliminar"><br>
+
+  </form>
+
+
+
+
+  <br><br><br>
+
+  <h3>Mostrar listado de películas</h3>
+  <form action="listado.php">
+    <input type="submit"  value="Mostrar">
+  </form>
+  
+
+
+
+</body>
+</html>
+
